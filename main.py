@@ -3,6 +3,8 @@ import requests
 import sys
 import time
 import os
+from concurrent.futures import ThreadPoolExecutor
+from itertools import repeat
 
 class collect:
     '处理采集业务'
@@ -15,7 +17,7 @@ class collect:
     def mzitu(self, number):
         if number == '': number = 1
 
-        total_count     = 1
+        total_count = 1
         for id, name in self.config['category'].items():
             for page in range(1, int(number) + 1): # 深度爬取几页
                 url = '%s%s/page/%s/' % (self.config['base_url'], id, str(page))
@@ -27,11 +29,24 @@ class collect:
                 imgs = soup.select(list_range)
 
                 sn = 1
+                # 同步
+                # for img in imgs:
+                #     self.get_remote_image(img[list_rules], id, str(page), str(sn)) # 获取大图
+                #     sn += 1
+                #     total_count += 1
+
+                data = []
                 for img in imgs:
-                    self.get_remote_image(img[list_rules], id, str(page), str(sn)) # 获取大图
-                    print("【正在下载】 {%s}第%d页第%d张图片, 共下载了%d张图片" % (name, page, sn, total_count))
+                    data.append([img[list_rules], id, str(page), str(sn), total_count])
                     sn += 1
                     total_count += 1
+
+                # 改成异步多线程, 增加采集效率
+                executor = ThreadPoolExecutor() 
+                with ThreadPoolExecutor() as executor:
+                    for i in executor.map(self.get_remote_image, data):
+                        print("【正在下载】 {%s}第%s页第%s张图片, 共下载了%d张图片" % (name, i[0], i[1], i[2]))
+                    
 
     # 获取图片名称
     def get_image_name(self, page, sn):
@@ -39,20 +54,27 @@ class collect:
         return filename
 
     # 将远程图片下载至本地
-    def get_remote_image(self, img_url, dir = '', page = '', sn = ''):
+    def get_remote_image(self, data):
+        img_url     = data[0]
+        dir         = data[1]
+        page        = data[2]
+        sn          = data[3]
+        total_count = data[4]
         filename = self.get_image_name(page, sn)
 
         if dir == '':
             upload_dir = sys.path[0] + '\\src\\' # 本地绝对路径
         else:
             upload_dir = sys.path[0] + '\\src\\' + dir + '\\'
-        
+
         if os.path.exists(upload_dir) == False: # 不存在则创建
             os.mkdir(upload_dir)
-
+        
         resp = requests.get(img_url, headers = self.img_header)
-        with open(upload_dir + filename, 'wb') as f:
-            f.write(resp.content) # 获取图片二进制格式(数据流)
+        f = open(upload_dir + filename, 'wb')
+        f.write(resp.content) # 获取图片二进制格式(数据流)
+        f.close()
+        return [page, sn, total_count]
 
 def main():
     header = { # 访问主页请求头
