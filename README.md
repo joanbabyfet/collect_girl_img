@@ -1,10 +1,11 @@
 ## About
-基于 Python3 采集妹子图，将远程图片下载至本地，支持页面深度采集
+基于 Python3 采集妹子图，通过异步多线程将远程图片下载至本地，并支持页面深度采集
 
 ## Feature
 
 * 采集妹子图, 网站以 https://mmzztt.com 为例
 * 引用 BeautifulSoup 库, 实现选择html DOM 
+* 通过异步多线程增加采集效率
 * 支持页面深度采集, 并将远程图片下载至本地
 
 ## Requires
