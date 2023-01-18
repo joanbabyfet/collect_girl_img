@@ -17,6 +17,7 @@ requests 2.28.1
 ```
 python main.py
 ```
+![image](https://raw.githubusercontent.com/joanbabyfet/md_img/master/collect_girl_img/display.jpg)
 
 ## Change Log
 v1.0.0  
